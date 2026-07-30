@@ -1,18 +1,27 @@
-# Huddle Diário TI - Dashboard
+# Huddle Diário TI - Dashboard (v0.4)
 
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.37.0-FF4B4B.svg?style=flat&logo=Streamlit)
 ![Pandas](https://img.shields.io/badge/Pandas-2.2.2-150458.svg?style=flat&logo=pandas)
+![Plotly](https://img.shields.io/badge/Plotly-5.23.0-3F4F75.svg?style=flat&logo=plotly)
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB.svg?style=flat&logo=python)
 
-Este é um sistema Web interno desenvolvido em **Python (Streamlit + Pandas)** projetado para automatizar a extração de métricas de relatórios de chamados (Service Desk) e gerar, instantaneamente, o documento em PDF de posicionamento diário da TI, conhecido como **Huddle**.
+Este é um sistema Web interno desenvolvido em **Python (Streamlit + Pandas + Plotly)** projetado para automatizar a extração de métricas de relatórios de chamados (Service Desk) e gerar, instantaneamente, o documento em PDF de posicionamento diário da TI, conhecido como **Huddle**.
 
 O Huddle é uma prática ágil para reuniões rápidas e diárias de alinhamento. Este sistema reduz o tempo de confecção do relatório de 40 minutos para menos de 3 minutos, eliminando tarefas manuais repetitivas e garantindo um layout padronizado.
 
 ## ✨ Funcionalidades
-- **Importação Dinâmica:** Drag and Drop de arquivo `.csv` bruto do seu sistema de chamados.
+- **Importação Dinâmica:** Drag and Drop de arquivo `.xlsx` (Excel) bruto do seu sistema de chamados.
 - **Processamento Rápido:** Backend que analisa os chamados em tempo real (Geral, Sistemas, Infraestrutura, SLA Vencido, etc).
 - **Gerenciador de Equipes:** Configuração visual integrada para definir quais analistas são de Infraestrutura e Sistemas.
+- **Módulo de Business Intelligence:** Tela dedicada com histórico em `.csv` e gráficos interativos (Plotly) acompanhando a evolução dos indicadores da TI.
 - **Relatório PDF Oficial:** Geração do documento em `.pdf` espelhando layouts corporativos exatos, incluindo cabeçalhos, rodapés, tabelas e anotações.
+
+## 📦 Notas de Lançamento (Release v0.4)
+- **Novo:** Tela de "Evolução e Gráficos" para acompanhamento da saúde da fila de TI ao longo dos meses.
+- **Novo:** Trava de segurança anti-duplicação na geração de relatórios diários.
+- **Novo:** Botões unificados usando a paleta de cores institucional.
+- **Melhoria:** Migração dos gráficos nativos do Streamlit para o Plotly Express (ferramentas de zoom, tooltip inteligente, etc).
+- **Correção:** Ajustes estruturais nas colunas do relatório (Conserto Externo, Aguardando Material, Aguardando Liberação Setor).
 
 ## 🚀 Como instalar e rodar localmente
 
