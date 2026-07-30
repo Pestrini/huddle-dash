@@ -52,8 +52,10 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# SIDEBAR: CONFIGURAÇÃO DE ANALISTAS
-st.sidebar.title("⚙️ Configurações")
+# SIDEBAR CONFIGURAÇÃO
+st.sidebar.image("logo_huddle_hurp_transparente.png", use_column_width=True)
+st.sidebar.markdown("<br>", unsafe_allow_html=True)
+st.sidebar.header("⚙️ Gerenciamento de Equipes")
 st.sidebar.markdown("Gerencie a equipe de TI")
 config = load_config()
 
@@ -71,7 +73,6 @@ with st.sidebar.expander("Equipe de Sistemas"):
         save_config(config)
         st.success("Salvo!")
 
-st.image("logo_huddle_hurp_transparente.png", width=300)
 st.title("📊 Huddle Diário TI - HURP")
 
 # BLOCO 1: UPLOAD
