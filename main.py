@@ -71,6 +71,7 @@ with st.sidebar.expander("Equipe de Sistemas"):
         save_config(config)
         st.success("Salvo!")
 
+st.image("logo_huddle_hurp_transparente.png", width=300)
 st.title("📊 Huddle Diário TI - HURP")
 
 # BLOCO 1: UPLOAD
