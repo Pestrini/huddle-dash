@@ -104,10 +104,10 @@ def generate_pdf(metrics, form_data, analistas_data, output_path):
     print_metric_row('CHAMADOS DE SISTEMAS', metrics.get('chamados_sistemas', 0))
     print_metric_row('CHAMADOS DE INFRAESTRUTURA', metrics.get('chamados_infra', 0))
     print_metric_row('CHAMADOS QUE PRECISAM APOIO DESENVOLVIMENTO', metrics.get('apoio_dev_manual', 0))
-    print_metric_row('TOTAL CHAMADOS SLA VENCIDO DESCONSIDERANDO CONSERTO EXTERNO', metrics.get('total_sla_vencido', 0))
+    print_metric_row('TOTAL CHAMADOS SLA VENCIDO DESCONSIDERANDO CONSERTO EXTERNO', metrics.get('sla_vencido_sem_ce', 0))
     print_metric_row('CHAMADOS INFRA SLA VENCIDO', metrics.get('infra_sla_vencido', 0))
     print_metric_row('CHAMADOS SISTEMAS SLA VENCIDO', metrics.get('sistemas_sla_vencido', 0))
-    print_metric_row('CHAMADO SLA VENCIDO A MAIS DE 03 DIAS (SEM CONSERTO EXTERNO)', metrics.get('sla_vencido_3_dias', 0))
+    print_metric_row('CHAMADOS SLA VENCIDO A MAIS DE 03 DIAS', metrics.get('sla_vencido_3_dias', 0))
     print_metric_row('CHAMADOS DO FINAL DO DIA PARA OUTRO - ONTEM PARA HOJE', metrics.get('chamados_ontem_hoje', 0))
     
     # Extra Questions inside table

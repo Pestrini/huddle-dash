@@ -27,6 +27,7 @@ def process_dataframe(df, config):
             'chamados_infra': 0,
             'sugestao_apoio_dev': 0,
             'total_sla_vencido': 0,
+            'sla_vencido_sem_ce': 0,
             'infra_sla_vencido': 0,
             'sistemas_sla_vencido': 0,
             'sla_vencido_3_dias': 0,
@@ -106,6 +107,10 @@ def process_dataframe(df, config):
     
     # Aplicando as regras aos indicadores
     
+    # Novo indicador que desconsidera APENAS Conserto Externo
+    nao_conserto = ~status_upper.isin(['CONSERTO EXTERNO'])
+    sla_vencido_sem_ce = len(df[sla_vencido_cond & nao_conserto])
+    
     # Total SLA Vencido (Regra 2) -> Como o usuário pediu para "bater com o total" dos analistas (Regra 3), usarei a mesma lógica estrita de Aberta/Solicitação para garantir consistência perfeita.
     total_sla_vencido = len(df[sla_vencido_cond & aberta_ou_solicitacao])
     
@@ -115,7 +120,7 @@ def process_dataframe(df, config):
     
     # SLA Vencido > 3 Dias (Regra 4)
     older_3_days_cond = df[col_data].apply(is_older_than_3_days) if col_data else pd.Series([False]*len(df))
-    sla_vencido_3_dias = len(df[sla_vencido_cond & nao_conserto_aguardando & older_3_days_cond])
+    sla_vencido_3_dias = len(df[sla_vencido_cond & older_3_days_cond])
     
     # Chamados Ontem p/ Hoje (Regra 5)
     ontem_hoje_cond = df[col_data].apply(is_yesterday) if col_data else pd.Series([False]*len(df))
@@ -201,6 +206,7 @@ def process_dataframe(df, config):
         'chamados_abertos_geral': abertos_geral,
         'chamados_sistemas': sistemas,
         'chamados_infra': infra,
+        'sla_vencido_sem_ce': sla_vencido_sem_ce,
         'sugestao_apoio_dev': apoio_dev,
         'total_sla_vencido': total_sla_vencido,
         'infra_sla_vencido': infra_sla_vencido,

@@ -115,9 +115,9 @@ if menu == "🏠 Huddle Diário":
 
     st.markdown("---")
     col4, col5, col6 = st.columns(3)
-    col4.metric("Total SLA Vencido", metrics['total_sla_vencido'])
-    col5.metric("Infra SLA Vencido", metrics['infra_sla_vencido'])
-    col6.metric("Sistemas SLA Vencido", metrics['sistemas_sla_vencido'])
+    col4.metric("Total SLA Vencido (s/ Cons. Ext.)", metrics['sla_vencido_sem_ce'])
+    col5.metric("Infra SLA Vencido (Abertas)", metrics['infra_sla_vencido'])
+    col6.metric("Sistemas SLA Vencido (Abertas)", metrics['sistemas_sla_vencido'])
 
     col7, col8, col9 = st.columns(3)
     col7.metric("SLA Vencido > 3 Dias", metrics['sla_vencido_3_dias'])
@@ -137,7 +137,11 @@ if menu == "🏠 Huddle Diário":
     with c3:
         st.markdown(f"<div style='font-size: 14px; color: #ccc;'><b>Aguardando Liberação Setor (Total): {metrics['al_total']}</b><br>Infra: {metrics['al_infra']} | Sistemas: {metrics['al_sist']}</div>", unsafe_allow_html=True)
 
-    st.markdown(f"<div style='text-align: right; font-size: 15px; color: #ccc; margin-top: 10px;'><b>Total Geral Outros Status: {metrics['total_outros']}</b></div>", unsafe_allow_html=True)
+    c4, c5 = st.columns(2)
+    with c4:
+        st.markdown(f"<div style='text-align: left; font-size: 15px; color: #ccc; margin-top: 10px;'><b>Total SLA Vencido (Abertas): {metrics['total_sla_vencido']}</b></div>", unsafe_allow_html=True)
+    with c5:
+        st.markdown(f"<div style='text-align: right; font-size: 15px; color: #ccc; margin-top: 10px;'><b>Total Geral Outros Status: {metrics['total_outros']}</b></div>", unsafe_allow_html=True)
 
     # BLOCO 3: FORMULÁRIO DE CONDUÇÃO
     st.header("3. Anotações do Huddle")

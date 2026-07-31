@@ -1,4 +1,4 @@
-# Huddle Diário TI - Dashboard (v0.4)
+# Huddle Diário TI - Dashboard (v0.5)
 
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.37.0-FF4B4B.svg?style=flat&logo=Streamlit)
 ![Pandas](https://img.shields.io/badge/Pandas-2.2.2-150458.svg?style=flat&logo=pandas)
@@ -15,6 +15,11 @@ O Huddle é uma prática ágil para reuniões rápidas e diárias de alinhamento
 - **Gerenciador de Equipes:** Configuração visual integrada para definir quais analistas são de Infraestrutura e Sistemas.
 - **Módulo de Business Intelligence:** Tela dedicada com histórico em `.csv` e gráficos interativos (Plotly) acompanhando a evolução dos indicadores da TI.
 - **Relatório PDF Oficial:** Geração do documento em `.pdf` espelhando layouts corporativos exatos, incluindo cabeçalhos, rodapés, tabelas e anotações.
+
+## 📦 Notas de Lançamento (Release v0.5)
+- **Regra de Negócio:** "SLA Vencido > 3 Dias" agora passa a abranger a fila global (todos os status) para maior precisão de backlog antigo.
+- **Layout:** Reestruturação do painel principal, elevando o "Total SLA Vencido" (incluindo Aguardando Material) para a linha de frente, e movendo a visão restrita para o rodapé.
+- **Correção:** Resolvido o bug de `KeyError` ao iniciar a interface pela primeira vez sem dados.
 
 ## 📦 Notas de Lançamento (Release v0.4)
 - **Novo:** Tela de "Evolução e Gráficos" para acompanhamento da saúde da fila de TI ao longo dos meses.
