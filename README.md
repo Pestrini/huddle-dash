@@ -1,4 +1,4 @@
-# Huddle Diário TI - Dashboard (v0.5)
+# Huddle Diário TI - Dashboard (v0.6)
 
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.37.0-FF4B4B.svg?style=flat&logo=Streamlit)
 ![Pandas](https://img.shields.io/badge/Pandas-2.2.2-150458.svg?style=flat&logo=pandas)
@@ -15,6 +15,11 @@ O Huddle é uma prática ágil para reuniões rápidas e diárias de alinhamento
 - **Gerenciador de Equipes:** Configuração visual integrada para definir quais analistas são de Infraestrutura e Sistemas.
 - **Módulo de Business Intelligence:** Tela dedicada com histórico em `.csv` e gráficos interativos (Plotly) acompanhando a evolução dos indicadores da TI.
 - **Relatório PDF Oficial:** Geração do documento em `.pdf` espelhando layouts corporativos exatos, incluindo cabeçalhos, rodapés, tabelas e anotações.
+
+## 📦 Notas de Lançamento (Release v0.6)
+- **Novo Status (Aguardando Atendimento):** Todo o motor de regras, painel e relatório oficial foi readaptado para englobar as particularidades de estourou de SLA desse novo status (antiga Solicitação).
+- **Inteligência de Times (Fallback):** O script de processamento agora é imune a mudanças bruscas no 'Tipo de Solicitação', cruzando o nome do Responsável com as configurações de painel para forçar a vinculação correta (Infra vs Sistemas).
+- **Layout de Dashboard:** Painel recriado em grid 3x3 garantindo total alinhamento estético entre os novos e antigos indicadores de SLA.
 
 ## 📦 Notas de Lançamento (Release v0.5)
 - **Regra de Negócio:** "SLA Vencido > 3 Dias" agora passa a abranger a fila global (todos os status) para maior precisão de backlog antigo.

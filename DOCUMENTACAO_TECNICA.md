@@ -54,12 +54,12 @@ O sistema foi construído sobre a linguagem **Python**. Abaixo, as bibliotecas (
 ### 4.2. `data_processor.py`
 É o **cérebro matemático** do sistema. Ele não tem interface gráfica; recebe uma tabela crua do Pandas e devolve um dicionário de números mastigados.
 - **Variáveis Chaves e Dicionário de Retorno:** Caso a tabela venha vazia, ele devolve imediatamente um dicionário com todos os valores zerados (ex: `{'total_sla_vencido': 0}`).
-- **Função `get_equipe`:** Analisa cada linha do Excel. Observa a coluna "Responsável" (Analista) e compara com o dicionário do `config.json` para carimbar o chamado como sendo de "Infraestrutura" ou "Sistemas".
+- **Função `get_equipe`:** Analisa cada linha do Excel. Primeiro tenta identificar a equipe através da coluna "Tipo de Solicitação" (ex: Manutenção = Infraestrutura). Caso não consiga, ele atua como um sistema inteligente de fallback: lê o nome da coluna "Responsável" (Analista) e compara com as listas cadastradas no `config.json` para garantir que o chamado caia na equipe de "Infraestrutura" ou "Sistemas".
 - **Tratamento de Datas:** Descobre quando foi "Ontem" (Regra 5), ignorando fins de semana (se hoje for Segunda, ontem foi Sexta-feira). Converte as strings de texto em objetos de Data reais do Python.
 - **Regras de Negócio (Exclusões):**
   - `nao_conserto`: Ignora linhas onde o status é 'CONSERTO EXTERNO'.
-  - `aberta_ou_solicitacao`: Isola estritamente os chamados aguardando atendimento em primeiro nível de suporte.
-  - `older_3_days_cond`: Conta o relógio para trás e identifica tickets parados há mais de 72h.
+  - `apenas_aberta` / `apenas_aguardando`: Isola rigorosamente os chamados cujos status são 'ABERTA' (técnico atuando) ou 'AGUARDANDO ATENDIMENTO' (fila crua).
+  - `older_3_days_cond`: Conta o relógio para trás e identifica tickets parados há mais de 72h. Independente do status, eles estouram no backlog antigo se ainda constarem na Relação de OS Pendentes.
 
 ### 4.3. `history_manager.py`
 É o **guardião do Banco de Dados**. Ele escreve e lê dados.

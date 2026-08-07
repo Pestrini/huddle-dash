@@ -8,15 +8,30 @@ def find_column(df, keyword):
     return None
 
 def get_equipe(row, config, col_resp, col_tipo):
-    # Regra 1: Separação estrita por Tipo de Solicitação
+    # Tenta usar o Tipo de Solicitação primeiro
     tipo = str(row.get(col_tipo, '')) if col_tipo else ''
     tipo = tipo.strip().upper()
     
-    if 'MANUTENÇÃO' in tipo:
+    if 'MANUTENÇÃO' in tipo or 'MANUTENCAO' in tipo:
         return 'Infraestrutura'
-    elif 'SOLICITAÇÃO' in tipo or 'SOLICITACAO' in tipo:
+    elif 'SOLICITAÇÃO' in tipo or 'SOLICITACAO' in tipo or 'AGUARDANDO ATENDIMENTO' in tipo:
         return 'Sistemas'
         
+    # Se não encontrou pelo tipo, usa o Analista (Responsável)
+    resp = str(row.get(col_resp, '')) if col_resp else ''
+    resp = resp.strip().upper()
+    
+    analistas_infra = [x.strip().upper() for x in config.get('analistas_infra', [])]
+    analistas_sistemas = [x.strip().upper() for x in config.get('analistas_sistemas', [])]
+    
+    for a in analistas_infra:
+        if a in resp:
+            return 'Infraestrutura'
+            
+    for a in analistas_sistemas:
+        if a in resp:
+            return 'Sistemas'
+            
     return 'Outros'
 
 def process_dataframe(df, config):
@@ -30,11 +45,15 @@ def process_dataframe(df, config):
             'sla_vencido_sem_ce': 0,
             'infra_sla_vencido': 0,
             'sistemas_sla_vencido': 0,
+            'total_sla_vencido_aguardando': 0,
+            'infra_sla_vencido_aguardando': 0,
+            'sistemas_sla_vencido_aguardando': 0,
             'sla_vencido_3_dias': 0,
             'chamados_ontem_hoje': 0,
             'ce_total': 0, 'ce_infra': 0, 'ce_sist': 0,
             'am_total': 0, 'am_infra': 0, 'am_sist': 0,
             'al_total': 0, 'al_infra': 0, 'al_sist': 0,
+            'aat_total': 0,
             'total_outros': 0,
             'os_por_analista': {}
         }
@@ -102,8 +121,10 @@ def process_dataframe(df, config):
     # Regra 2: Desconsiderar Conserto Externo e Aguardando Material
     nao_conserto_aguardando = ~status_upper.isin(['CONSERTO EXTERNO', 'AGUARDANDO MATERIAL'])
     
-    # Regra 3: Apenas Aberta ou Solicitação para Infra e Sistemas
-    aberta_ou_solicitacao = status_upper.isin(['ABERTA', 'SOLICITAÇÃO', 'SOLICITACAO'])
+    # Regra 3: Apenas Aberta ou Aguardando Atendimento
+    apenas_aberta = status_upper == 'ABERTA'
+    apenas_aguardando = status_upper == 'AGUARDANDO ATENDIMENTO'
+    aberta_ou_aguardando = apenas_aberta | apenas_aguardando
     
     # Aplicando as regras aos indicadores
     
@@ -111,12 +132,19 @@ def process_dataframe(df, config):
     nao_conserto = ~status_upper.isin(['CONSERTO EXTERNO'])
     sla_vencido_sem_ce = len(df[sla_vencido_cond & nao_conserto])
     
-    # Total SLA Vencido (Regra 2) -> Como o usuário pediu para "bater com o total" dos analistas (Regra 3), usarei a mesma lógica estrita de Aberta/Solicitação para garantir consistência perfeita.
-    total_sla_vencido = len(df[sla_vencido_cond & aberta_ou_solicitacao])
+    # Total SLA Vencido (Abertas)
+    total_sla_vencido = len(df[sla_vencido_cond & apenas_aberta])
     
-    # Infra e Sistemas SLA Vencido (Regra 3)
-    infra_sla_vencido = len(df[(df['Equipe'] == 'Infraestrutura') & sla_vencido_cond & aberta_ou_solicitacao])
-    sistemas_sla_vencido = len(df[(df['Equipe'] == 'Sistemas') & sla_vencido_cond & aberta_ou_solicitacao])
+    # Total SLA Vencido (Aguardando Atendimento)
+    total_sla_vencido_aguardando = len(df[sla_vencido_cond & apenas_aguardando])
+    
+    # Infra e Sistemas SLA Vencido (Abertas)
+    infra_sla_vencido = len(df[(df['Equipe'] == 'Infraestrutura') & sla_vencido_cond & apenas_aberta])
+    sistemas_sla_vencido = len(df[(df['Equipe'] == 'Sistemas') & sla_vencido_cond & apenas_aberta])
+    
+    # Infra e Sistemas SLA Vencido (Aguardando Atendimento)
+    infra_sla_vencido_aguardando = len(df[(df['Equipe'] == 'Infraestrutura') & sla_vencido_cond & apenas_aguardando])
+    sistemas_sla_vencido_aguardando = len(df[(df['Equipe'] == 'Sistemas') & sla_vencido_cond & apenas_aguardando])
     
     # SLA Vencido > 3 Dias (Regra 4)
     older_3_days_cond = df[col_data].apply(is_older_than_3_days) if col_data else pd.Series([False]*len(df))
@@ -124,7 +152,7 @@ def process_dataframe(df, config):
     
     # Chamados Ontem p/ Hoje (Regra 5)
     ontem_hoje_cond = df[col_data].apply(is_yesterday) if col_data else pd.Series([False]*len(df))
-    chamados_ontem_hoje = len(df[ontem_hoje_cond & aberta_ou_solicitacao])
+    chamados_ontem_hoje = len(df[ontem_hoje_cond & aberta_ou_aguardando])
 
     # Novos Indicadores Discretos (Conserto, Material, Liberação)
     conserto_ext = status_upper == 'CONSERTO EXTERNO'
@@ -141,6 +169,8 @@ def process_dataframe(df, config):
     al_total = len(df[ag_lib])
     al_infra = len(df[(df['Equipe'] == 'Infraestrutura') & ag_lib])
     al_sist = len(df[(df['Equipe'] == 'Sistemas') & ag_lib])
+    
+    aat_total = len(df[apenas_aguardando])
     
     total_outros = ce_total + am_total + al_total
 
@@ -211,11 +241,15 @@ def process_dataframe(df, config):
         'total_sla_vencido': total_sla_vencido,
         'infra_sla_vencido': infra_sla_vencido,
         'sistemas_sla_vencido': sistemas_sla_vencido,
+        'total_sla_vencido_aguardando': total_sla_vencido_aguardando,
+        'infra_sla_vencido_aguardando': infra_sla_vencido_aguardando,
+        'sistemas_sla_vencido_aguardando': sistemas_sla_vencido_aguardando,
         'sla_vencido_3_dias': sla_vencido_3_dias,
         'chamados_ontem_hoje': chamados_ontem_hoje,
         'ce_total': ce_total, 'ce_infra': ce_infra, 'ce_sist': ce_sist,
         'am_total': am_total, 'am_infra': am_infra, 'am_sist': am_sist,
         'al_total': al_total, 'al_infra': al_infra, 'al_sist': al_sist,
+        'aat_total': aat_total,
         'total_outros': total_outros,
         'os_aberta_solic': os_aberta_solic,
         'os_conserto': os_conserto,

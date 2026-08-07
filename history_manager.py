@@ -14,7 +14,8 @@ COLUMNS = [
     'SLA Vencido Infra',
     'Aguardando Material',
     'Conserto Externo',
-    'Aguardando Liberação Setor'
+    'Aguardando Liberação Setor',
+    'Aguardando Atendimento'
 ]
 
 def load_history():
@@ -54,7 +55,8 @@ def save_daily_metrics(metrics):
         'SLA Vencido Infra': metrics.get('infra_sla_vencido', 0),
         'Aguardando Material': metrics.get('am_total', 0),
         'Conserto Externo': metrics.get('ce_total', 0),
-        'Aguardando Liberação Setor': metrics.get('al_total', 0)
+        'Aguardando Liberação Setor': metrics.get('al_total', 0),
+        'Aguardando Atendimento': metrics.get('aat_total', 0)
     }
     
     if history_exists_for_today():
