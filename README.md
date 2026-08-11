@@ -1,4 +1,4 @@
-# Huddle Diário TI - Dashboard (v0.6)
+# Huddle Diário TI - Dashboard (v0.8)
 
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.37.0-FF4B4B.svg?style=flat&logo=Streamlit)
 ![Pandas](https://img.shields.io/badge/Pandas-2.2.2-150458.svg?style=flat&logo=pandas)
@@ -15,6 +15,12 @@ O Huddle é uma prática ágil para reuniões rápidas e diárias de alinhamento
 - **Gerenciador de Equipes:** Configuração visual integrada para definir quais analistas são de Infraestrutura e Sistemas.
 - **Módulo de Business Intelligence:** Tela dedicada com histórico em `.csv` e gráficos interativos (Plotly) acompanhando a evolução dos indicadores da TI.
 - **Relatório PDF Oficial:** Geração do documento em `.pdf` espelhando layouts corporativos exatos, incluindo cabeçalhos, rodapés, tabelas e anotações.
+- **State Persistence (Memória):** O painel guarda os textos digitados e o Excel na memória nativa durante a sessão ativa, evitando perda de dados ao navegar entre as páginas.
+
+## 📦 Notas de Lançamento (Release v0.8)
+- **Persistência de Memória:** O sistema agora salva as respostas da reunião (Assuntos Discutidos, Atividades) e a planilha Excel na memória cache, prevenindo o "reset" ao trocar de abas.
+- **Totalizadores por Bloco:** A interface Web ganhou novos cartões de topo de tabela evidenciando a soma total das sub-categorias: (Fila Ativa, SLA Vencido Geral e Retidos).
+- **Extração de Média e Quadros PDF:** O Relatório Huddle PDF foi severamente reestruturado em 3 grandes Quadros tabulares, incluindo formatação de cor vermelha nativa para números de OS estourados e um cálculo dinâmico da "Média Diária" extraída do histórico vivo da equipe.
 
 ## 📦 Notas de Lançamento (Release v0.6)
 - **Novo Status (Aguardando Atendimento):** Todo o motor de regras, painel e relatório oficial foi readaptado para englobar as particularidades de estourou de SLA desse novo status (antiga Solicitação).

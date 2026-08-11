@@ -46,10 +46,11 @@ O sistema foi construído sobre a linguagem **Python**. Abaixo, as bibliotecas (
 - **Sessão 3 (Página Inicial - Huddle Diário):**
   - Solicita o *upload* da planilha `.xlsx`.
   - Passa o arquivo recebido para o `data_processor.py`.
-  - Renderiza painéis (cards de métricas) exibindo as variáveis numéricas devolvidas (ex: `Total SLA Vencido`).
+  - **Memory Cache (State Persistence):** Armazena o dataframe, métricas e textos preenchidos no dicionário `st.session_state` para garantir que o usuário não perca os dados de tela ao navegar entre abas do Streamlit.
+  - Renderiza painéis (cards de métricas) exibindo as variáveis numéricas devolvidas, segregadas em 3 quadros principais: Fila Ativa, SLA Vencido e Retidos.
   - Cria caixas de texto (inputs) para as anotações diárias (Problemas Críticos, Ações em Andamento).
   - Executa o botão de Salvar Histórico (acionando o `history_manager.py`) e o botão de Gerar PDF (acionando o `report_generator.py`).
-- **Sessão 4 (Página Evolução e Gráficos):** Carrega o CSV de histórico e usa o `plotly` para plotar 3 gráficos principais, habilitando caixas de seleção (filtros multi-seleção) para cada um deles.
+- **Sessão 4 (Página Evolução e Gráficos):** Carrega o CSV de histórico e usa o `plotly` para plotar gráficos dinâmicos filtráveis. Extrai automaticamente os dados da função `history_manager.get_current_month_averages()` para exibir a "Média Mensal" no topo e no documento PDF.
 
 ### 4.2. `data_processor.py`
 É o **cérebro matemático** do sistema. Ele não tem interface gráfica; recebe uma tabela crua do Pandas e devolve um dicionário de números mastigados.
@@ -59,7 +60,8 @@ O sistema foi construído sobre a linguagem **Python**. Abaixo, as bibliotecas (
 - **Regras de Negócio (Exclusões):**
   - `nao_conserto`: Ignora linhas onde o status é 'CONSERTO EXTERNO'.
   - `apenas_aberta` / `apenas_aguardando`: Isola rigorosamente os chamados cujos status são 'ABERTA' (técnico atuando) ou 'AGUARDANDO ATENDIMENTO' (fila crua).
-  - `older_3_days_cond`: Conta o relógio para trás e identifica tickets parados há mais de 72h. Independente do status, eles estouram no backlog antigo se ainda constarem na Relação de OS Pendentes.
+  - `older_3_days_cond`: Conta o relógio para trás e identifica tickets parados há mais de 72h.
+- **Tratamento de Strings HTML:** Aplica regras de Regex em `process_dataframe` e `main.py` para isolar números de Ordem de Serviço (OS) com SLA estourado e injetar marcadores visuais (bolinhas vermelhas) direto no relatório diário.
 
 ### 4.3. `history_manager.py`
 É o **guardião do Banco de Dados**. Ele escreve e lê dados.
@@ -70,7 +72,8 @@ O sistema foi construído sobre a linguagem **Python**. Abaixo, as bibliotecas (
 ### 4.4. `report_generator.py`
 É a **máquina de impressão**. Usa a biblioteca `fpdf2` (que utiliza conceitos de classe PDF orientada a objetos).
 - **Header e Footer (Cabeçalho e Rodapé):** O arquivo sobrescreve métodos nativos do FPDF para que toda página criada injete as imagens `cabecalho 2026.png` e `rodape 2026.png` no topo e no fundo da folha.
-- **`print_metric_row`:** Função auxiliar criada para evitar repetição de código. Ela desenha uma borda (retângulo), pinta uma cor de fundo, escreve o título do indicador à esquerda e preenche o número exato à direita.
+- **`print_quadro_row` e `print_section`:** Funções auxiliares para padronização. Desenhadas para imprimir as tabelas em 4 colunas (Título, Total, Infra, Sistemas) de forma estruturada e imprimir seções de texto corrido logo abaixo.
+- **Lógica HTML de Cores:** Emprega conversão de texto com caracteres coringa (ex: bolinhas vermelhas 🔴 geradas pela interface web) transformando-os em tags HTML `<font color="#ff0000">` nativamente suportadas pelo `write_html()` do FPDF. Isso permite colorir apenas os números de OS vencidos, mesmo limitados à fonte Arial (`latin-1`).
 - No final, ele lê os textos preenchidos pelo usuário e gera laços de repetição (`for analista, texto in analistas_data.items()`) para imprimir as atividades listadas por analista. O resultado final é "cuspido" (exportado) como bytes do arquivo gerado para o navegador baixar.
 
 ### 4.5. `run_dashboard.bat` (O Operário Silencioso)

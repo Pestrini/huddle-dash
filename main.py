@@ -98,9 +98,14 @@ if menu == "🏠 Huddle Diário":
         try:
             df = pd.read_excel(uploaded_file)
             metrics = process_dataframe(df, config)
+            st.session_state['huddle_metrics'] = metrics
+            st.session_state['huddle_filename'] = uploaded_file.name
         except Exception as e:
             st.error(f"Erro ao ler o Excel. Certifique-se que o formato está correto. Erro: {e}")
             metrics = process_dataframe(pd.DataFrame(), config)
+    elif 'huddle_metrics' in st.session_state:
+        st.success(f"Arquivo **{st.session_state['huddle_filename']}** salvo na memória! (Para alterar, faça o upload de outro arquivo acima)")
+        metrics = st.session_state['huddle_metrics']
     else:
         st.info("Por favor, importe o arquivo Excel (.xlsx) das OS's para carregar os indicadores.")
         metrics = process_dataframe(pd.DataFrame(), config)
@@ -116,6 +121,10 @@ if menu == "🏠 Huddle Diário":
     c3.metric("Sistemas (Geral)", metrics.get('q1_geral', {}).get('sist', 0))
     
     st.markdown("##### Fila Ativa (Desconsiderando Conserto Ext. e Aguard. Material)")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Fila Ativa (Total)", metrics.get('q1_ativa', {}).get('total', 0))
+    c2.metric("Infraestrutura (Fila Ativa)", metrics.get('q1_ativa', {}).get('infra', 0))
+    c3.metric("Sistemas (Fila Ativa)", metrics.get('q1_ativa', {}).get('sist', 0))
     c1, c2, c3 = st.columns(3)
     c1.metric("Em Atendimento (Total)", metrics.get('q1_em_atend', {}).get('total', 0))
     c2.metric("Infraestrutura (Em Atend.)", metrics.get('q1_em_atend', {}).get('infra', 0))
@@ -134,6 +143,10 @@ if menu == "🏠 Huddle Diário":
     st.markdown("---")
     # QUADRO 2
     st.subheader("Chamados com SLA Vencido (Fila Ativa)")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("SLA Vencido (Total Geral)", metrics.get('q2_sla_ativo', {}).get('total', 0))
+    c2.metric("Infraestrutura (SLA Vencido)", metrics.get('q2_sla_ativo', {}).get('infra', 0))
+    c3.metric("Sistemas (SLA Vencido)", metrics.get('q2_sla_ativo', {}).get('sist', 0))
     c1, c2, c3 = st.columns(3)
     c1.metric("Em Atendimento (Total)", metrics.get('q2_sla_em_atend', {}).get('total', 0))
     c2.metric("Infraestrutura (SLA)", metrics.get('q2_sla_em_atend', {}).get('infra', 0))
@@ -166,6 +179,10 @@ if menu == "🏠 Huddle Diário":
     # QUADRO 3
     st.subheader("Retidos (Conserto Externo e Material)")
     c1, c2, c3 = st.columns(3)
+    c1.metric("Total Retidos (Geral)", metrics.get('q3_retidos', {}).get('total', 0))
+    c2.metric("Infraestrutura (Retidos)", metrics.get('q3_retidos', {}).get('infra', 0))
+    c3.metric("Sistemas (Retidos)", metrics.get('q3_retidos', {}).get('sist', 0))
+    c1, c2, c3 = st.columns(3)
     c1.metric("Conserto Externo (Total)", metrics.get('q3_ce', {}).get('total', 0))
     c2.metric("Infraestrutura (CE)", metrics.get('q3_ce', {}).get('infra', 0))
     c3.metric("Sistemas (CE)", metrics.get('q3_ce', {}).get('sist', 0))
@@ -178,14 +195,27 @@ if menu == "🏠 Huddle Diário":
     # BLOCO 3: FORMULÁRIO DE CONDUÇÃO
     st.header("3. Anotações do Huddle")
 
+    # Inicializa variáveis no session_state para não perder texto ao trocar de tela
+    for key in ['f_assuntos', 'f_atividades', 'f_adicionais', 'f_problemas', 'f_acionamentos']:
+        if key not in st.session_state:
+            st.session_state[key] = ""
+
     c1, c2 = st.columns(2)
     with c1:
-        assuntos = st.text_area("Assuntos Discutidos no Dia (Ações/Ferramentas)")
-        atividades = st.text_area("Atividades Planejadas")
-        adicionais = st.text_area("Informações Adicionais (Ex: Acompanhar chamados, responsável...)")
+        assuntos = st.text_area("Assuntos Discutidos no Dia (Ações/Ferramentas)", value=st.session_state['f_assuntos'])
+        atividades = st.text_area("Atividades Planejadas", value=st.session_state['f_atividades'])
+        adicionais = st.text_area("Informações Adicionais (Ex: Acompanhar chamados, responsável...)", value=st.session_state['f_adicionais'])
+        
+        st.session_state['f_assuntos'] = assuntos
+        st.session_state['f_atividades'] = atividades
+        st.session_state['f_adicionais'] = adicionais
+        
     with c2:
-        problemas_infra_sist = st.text_area("Temos problemas críticos (Infra ou Sistemas)? (Ex: Lentidão, Impressora pendente)")
-        acionamentos = st.text_area("Temos Acionamentos Críticos no Plantão?")
+        problemas_infra_sist = st.text_area("Temos problemas críticos (Infra ou Sistemas)? (Ex: Lentidão, Impressora pendente)", value=st.session_state['f_problemas'])
+        acionamentos = st.text_area("Temos Acionamentos Críticos no Plantão?", value=st.session_state['f_acionamentos'])
+        
+        st.session_state['f_problemas'] = problemas_infra_sist
+        st.session_state['f_acionamentos'] = acionamentos
 
     # BLOCO 4: ATIVIDADES EM ANDAMENTO
     st.header("4. Atividades em Andamento (Por Analista)")
@@ -226,7 +256,10 @@ if menu == "🏠 Huddle Diário":
             analistas_data[analista] = texto
 
     st.markdown("<br>", unsafe_allow_html=True)
-    reincidentes = st.text_area("Chamados Reincidentes", placeholder="Ex: Impressora Farmacia OS 12345, OS 67890", height=100)
+    if 'f_reinc' not in st.session_state:
+        st.session_state['f_reinc'] = ""
+    reincidentes = st.text_area("Chamados Reincidentes", value=st.session_state['f_reinc'], placeholder="Ex: Impressora Farmacia OS 12345, OS 67890", height=100)
+    st.session_state['f_reinc'] = reincidentes
 
 
     # BLOCO 5: EXPORTAÇÃO E HISTÓRICO
@@ -236,12 +269,12 @@ if menu == "🏠 Huddle Diário":
     historico_existe = history_manager.history_exists_for_today()
     sobrescrever = False
     
-    if historico_existe and uploaded_file is not None:
+    if historico_existe and ('huddle_metrics' in st.session_state or uploaded_file is not None):
         st.warning("⚠️ Os indicadores de hoje já foram salvos no histórico. Deseja sobrescrevê-lo com os números atuais?")
         sobrescrever = st.checkbox("Sim, atualizar histórico de hoje", value=False)
         
     if st.button("Gerar Relatório Huddle", use_container_width=True):
-        if uploaded_file is None:
+        if 'huddle_metrics' not in st.session_state and uploaded_file is None:
             st.error("Por favor, importe o arquivo de chamados primeiro!")
         else:
             form_data = {
@@ -252,6 +285,9 @@ if menu == "🏠 Huddle Diário":
                 'informacoes_adicionais': adicionais,
                 'reincidentes': reincidentes
             }
+            
+            # Adiciona a média do mês corrente baseada no histórico
+            metrics['media_mes'] = history_manager.get_current_month_averages()
             
             data_atual = datetime.now().strftime("%d_%m_%Y")
             pdf_filename = f"Huddle_Diario_TI_{data_atual}.pdf"
@@ -288,17 +324,52 @@ elif menu == "📈 Evolução e Gráficos":
     if df_hist.empty:
         st.info("Nenhum dado histórico encontrado. Gere o seu primeiro relatório Huddle na página principal para começar a formar os gráficos!")
     else:
-        # Set Date as index for plotting
-        df_hist = df_hist.set_index('Data')
+        min_date = df_hist['Data'].min().date()
+        max_date = df_hist['Data'].max().date()
         
-        if len(df_hist) == 1:
-            st.info("ℹ️ Você possui apenas 1 dia salvo no histórico. Os gráficos de linha precisam de pelo menos 2 dias para desenharem a curva (linha conectando os pontos). Por enquanto, você verá o gráfico em branco ou com apenas um ponto na data de hoje.")
+        st.subheader("Filtros de Período")
+        start_date, end_date = st.date_input(
+            "Selecione o Período para analisar (Mensal/Diário):",
+            value=(min_date, max_date),
+            min_value=min_date,
+            max_value=max_date,
+            format="DD/MM/YYYY"
+        )
+        
+        # Filtra o dataframe com base na seleção
+        if start_date and end_date:
+            mask = (df_hist['Data'].dt.date >= start_date) & (df_hist['Data'].dt.date <= end_date)
+            df_filtered = df_hist.loc[mask]
+        else:
+            df_filtered = df_hist
+            
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.subheader("Média Diária do Período Selecionado")
+        c1, c2, c3 = st.columns(3)
+        if not df_filtered.empty:
+            media_total = int(df_filtered['Abertos Geral'].mean())
+            media_infra = int(df_filtered['Infraestrutura'].mean())
+            media_sist = int(df_filtered['Sistemas'].mean())
+        else:
+            media_total = media_infra = media_sist = 0
+            
+        c1.metric("Média Diária (Total)", media_total)
+        c2.metric("Média Diária (Infra)", media_infra)
+        c3.metric("Média Diária (Sistemas)", media_sist)
+        
+        st.markdown("---")
+        
+        # Set Date as index for plotting using the filtered dataframe
+        df_plot = df_filtered.set_index('Data')
+        
+        if len(df_plot) <= 1:
+            st.info("ℹ️ Você possui 1 ou zero dias no período selecionado. Os gráficos de linha precisam de pelo menos 2 dias para desenharem a curva (linha conectando os pontos).")
         
         st.subheader("1. Evolução do Backlog de Chamados")
         cols_backlog = ['Abertos Geral', 'Sistemas', 'Infraestrutura']
         selecao_backlog = st.multiselect("Filtrar linhas:", cols_backlog, default=cols_backlog, key='ms_backlog')
         if selecao_backlog:
-            fig1 = px.line(df_hist, y=selecao_backlog, markers=True, labels={'value': 'Quantidade', 'variable': 'Métrica'})
+            fig1 = px.line(df_plot, y=selecao_backlog, markers=True, labels={'value': 'Quantidade', 'variable': 'Métrica'})
             fig1.update_layout(
                 hovermode="x unified", xaxis_title="", yaxis_title="Quantidade", 
                 legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5, title=""),
@@ -312,7 +383,7 @@ elif menu == "📈 Evolução e Gráficos":
         cols_sla = ['SLA Vencido Total', 'SLA Vencido Sistemas', 'SLA Vencido Infra']
         selecao_sla = st.multiselect("Filtrar linhas:", cols_sla, default=cols_sla, key='ms_sla')
         if selecao_sla:
-            fig2 = px.line(df_hist, y=selecao_sla, markers=True, labels={'value': 'Quantidade', 'variable': 'Métrica'})
+            fig2 = px.line(df_plot, y=selecao_sla, markers=True, labels={'value': 'Quantidade', 'variable': 'Métrica'})
             fig2.update_layout(
                 hovermode="x unified", xaxis_title="", yaxis_title="Quantidade", 
                 legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5, title=""),
@@ -326,7 +397,7 @@ elif menu == "📈 Evolução e Gráficos":
         cols_externos = ['Aguardando Material', 'Conserto Externo', 'Aguardando Liberação Setor']
         selecao_externos = st.multiselect("Filtrar linhas:", cols_externos, default=cols_externos, key='ms_ext')
         if selecao_externos:
-            fig3 = px.line(df_hist, y=selecao_externos, markers=True, labels={'value': 'Quantidade', 'variable': 'Métrica'})
+            fig3 = px.line(df_plot, y=selecao_externos, markers=True, labels={'value': 'Quantidade', 'variable': 'Métrica'})
             fig3.update_layout(
                 hovermode="x unified", xaxis_title="", yaxis_title="Quantidade", 
                 legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5, title=""),
@@ -337,4 +408,4 @@ elif menu == "📈 Evolução e Gráficos":
         
         # Opcional: mostrar a tabela bruta
         with st.expander("Ver Base de Dados Bruta (CSV)"):
-            st.dataframe(df_hist)
+            st.dataframe(df_plot)

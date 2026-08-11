@@ -72,3 +72,22 @@ def save_daily_metrics(metrics):
     # Re-converte data para string YYYY-MM-DD antes de salvar para ficar limpo no CSV
     df['Data'] = df['Data'].dt.strftime('%Y-%m-%d')
     df.to_csv(HISTORY_FILE, index=False)
+
+def get_current_month_averages():
+    """Retorna a média diária do mês atual com base no histórico."""
+    df = load_history()
+    if df.empty:
+        return {'total': 0, 'infra': 0, 'sist': 0}
+        
+    hoje = datetime.today()
+    # Filtra pelo ano e mês atuais
+    df_mes = df[(df['Data'].dt.year == hoje.year) & (df['Data'].dt.month == hoje.month)]
+    
+    if df_mes.empty:
+        return {'total': 0, 'infra': 0, 'sist': 0}
+        
+    return {
+        'total': int(df_mes['Abertos Geral'].mean()),
+        'infra': int(df_mes['Infraestrutura'].mean()),
+        'sist': int(df_mes['Sistemas'].mean())
+    }

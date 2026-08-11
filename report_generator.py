@@ -111,7 +111,11 @@ def generate_pdf(metrics, form_data, analistas_data, output_path):
     # QUADRO 1
     print_quadro_header('QUADRO 1: VISÃO GERAL DE CHAMADOS')
     print_quadro_row('Total Chamados (todos os status)', g('q1_geral', 'total'), g('q1_geral', 'infra'), g('q1_geral', 'sist'), True)
-    print_quadro_row('FILA ATIVA (Sem Conserto Externo e Aguardando Material)', g('q1_ativa', 'total'), g('q1_ativa', 'infra'), g('q1_ativa', 'sist'), True)
+    
+    media_mes = metrics.get('media_mes', {'total': 0, 'infra': 0, 'sist': 0})
+    print_quadro_row('Média Diária (Mês Atual)', media_mes.get('total', 0), media_mes.get('infra', 0), media_mes.get('sist', 0), True)
+    
+    print_quadro_row('TOTAL FILA ATIVA (Sem Conserto Externo e Aguardando Material)', g('q1_ativa', 'total'), g('q1_ativa', 'infra'), g('q1_ativa', 'sist'), True)
     print_quadro_row('   -> Em Atendimento', g('q1_em_atend', 'total'), g('q1_em_atend', 'infra'), g('q1_em_atend', 'sist'))
     print_quadro_row('   -> Aguardando Atendimento', g('q1_ag_atend', 'total'), g('q1_ag_atend', 'infra'), g('q1_ag_atend', 'sist'))
     print_quadro_row('   -> Aguardando Liberação Setor', g('q1_ag_lib', 'total'), g('q1_ag_lib', 'infra'), g('q1_ag_lib', 'sist'))
@@ -119,7 +123,7 @@ def generate_pdf(metrics, form_data, analistas_data, output_path):
     
     # QUADRO 2
     print_quadro_header('QUADRO 2: CHAMADOS COM SLA VENCIDO')
-    print_quadro_row('SLA VENCIDO (FILA ATIVA)', g('q2_sla_ativo', 'total'), g('q2_sla_ativo', 'infra'), g('q2_sla_ativo', 'sist'), True)
+    print_quadro_row('TOTAL SLA VENCIDO (FILA ATIVA)', g('q2_sla_ativo', 'total'), g('q2_sla_ativo', 'infra'), g('q2_sla_ativo', 'sist'), True)
     print_quadro_row('   -> Em Atendimento', g('q2_sla_em_atend', 'total'), g('q2_sla_em_atend', 'infra'), g('q2_sla_em_atend', 'sist'))
     print_quadro_row('   -> Aguardando Atendimento', g('q2_sla_ag_atend', 'total'), g('q2_sla_ag_atend', 'infra'), g('q2_sla_ag_atend', 'sist'))
     print_quadro_row('   -> Aguardando Liberação Setor', g('q2_sla_ag_lib', 'total'), g('q2_sla_ag_lib', 'infra'), g('q2_sla_ag_lib', 'sist'))
