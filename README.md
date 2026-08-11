@@ -22,6 +22,12 @@ O Huddle é uma prática ágil para reuniões rápidas e diárias de alinhamento
 - **Totalizadores por Bloco:** A interface Web ganhou novos cartões de topo de tabela evidenciando a soma total das sub-categorias: (Fila Ativa, SLA Vencido Geral e Retidos).
 - **Extração de Média e Quadros PDF:** O Relatório Huddle PDF foi severamente reestruturado em 3 grandes Quadros tabulares, incluindo formatação de cor vermelha nativa para números de OS estourados e um cálculo dinâmico da "Média Diária" extraída do histórico vivo da equipe.
 
+## 📦 Notas de Lançamento (Release v0.7)
+- **Quebras de Página Automáticas:** Motor de PDF agora reconhece textos longos no Huddle e migra seções ("Atividades", "Assuntos Discutidos") de forma inteligente para páginas secundárias.
+- **Formatação de Alertas (Cor):** Identificadores visuais de SLA Estourado (Bolinhas Vermelhas) da interface Web agora são convertidos nativamente para fontes textuais da cor vermelha no PDF, superando as limitações do encoding Latin-1.
+- **Reorganização de Layout:** O PDF inverteu as seções de Textos e Quadros, apresentando primeiro a Visão Geral Numérica logo no topo do relatório, agilizando a leitura nas reuniões de coordenação.
+- **Correção de Bugs:** Resolvido os incidentes críticos de escopo (`status_upper`) durante o agrupamento de analistas.
+
 ## 📦 Notas de Lançamento (Release v0.6)
 - **Novo Status (Aguardando Atendimento):** Todo o motor de regras, painel e relatório oficial foi readaptado para englobar as particularidades de estourou de SLA desse novo status (antiga Solicitação).
 - **Inteligência de Times (Fallback):** O script de processamento agora é imune a mudanças bruscas no 'Tipo de Solicitação', cruzando o nome do Responsável com as configurações de painel para forçar a vinculação correta (Infra vs Sistemas).
