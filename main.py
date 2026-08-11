@@ -108,45 +108,72 @@ if menu == "🏠 Huddle Diário":
     # BLOCO 2: METRICAS
     st.header("2. Indicadores Huddle Diário")
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Abertos Geral", metrics['chamados_abertos_geral'])
-    col2.metric("Sistemas", metrics['chamados_sistemas'])
-    col3.metric("Infraestrutura", metrics['chamados_infra'])
-
-    st.markdown("---")
-    col4, col5, col6 = st.columns(3)
-    col4.metric("Total SLA Vencido (s/ Cons. Ext.)", metrics['sla_vencido_sem_ce'])
-    col5.metric("Infra SLA Vencido (Abertas)", metrics['infra_sla_vencido'])
-    col6.metric("Sistemas SLA Vencido (Abertas)", metrics['sistemas_sla_vencido'])
-
-    col7, col8, col9 = st.columns(3)
-    col7.metric("Infra SLA Vencido (Ag. Atend.)", metrics['infra_sla_vencido_aguardando'])
-    col8.metric("Sistemas SLA Vencido (Ag. Atend.)", metrics['sistemas_sla_vencido_aguardando'])
-    col9.metric("SLA Vencido > 3 Dias", metrics['sla_vencido_3_dias'])
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    col10, col11, col12 = st.columns(3)
-    col10.metric("Chamados Ontem p/ Hoje", metrics['chamados_ontem_hoje'])
-    with col11:
-        apoio_dev_manual = st.number_input("Apoio Desenvolvimento", value=0, min_value=0, step=1)
-        metrics['apoio_dev_manual'] = apoio_dev_manual
-
-    st.markdown("---")
-    st.markdown("##### Outros Status")
+    # QUADRO 1
+    st.subheader("Visão Geral de Chamados")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Abertos (Geral)", metrics.get('q1_geral', {}).get('total', 0))
+    c2.metric("Infraestrutura (Geral)", metrics.get('q1_geral', {}).get('infra', 0))
+    c3.metric("Sistemas (Geral)", metrics.get('q1_geral', {}).get('sist', 0))
+    
+    st.markdown("##### Fila Ativa (Desconsiderando Conserto Ext. e Aguard. Material)")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Em Atendimento (Total)", metrics.get('q1_em_atend', {}).get('total', 0))
+    c2.metric("Infraestrutura (Em Atend.)", metrics.get('q1_em_atend', {}).get('infra', 0))
+    c3.metric("Sistemas (Em Atend.)", metrics.get('q1_em_atend', {}).get('sist', 0))
+    
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Aguard. Atend. (Total)", metrics.get('q1_ag_atend', {}).get('total', 0))
+    c2.metric("Infraestrutura (Ag. Atend.)", metrics.get('q1_ag_atend', {}).get('infra', 0))
+    c3.metric("Sistemas (Ag. Atend.)", metrics.get('q1_ag_atend', {}).get('sist', 0))
 
     c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown(f"<div style='font-size: 14px; color: #ccc;'><b>Conserto Externo (Total): {metrics['ce_total']}</b><br>Infra: {metrics['ce_infra']} | Sistemas: {metrics['ce_sist']}</div>", unsafe_allow_html=True)
-    with c2:
-        st.markdown(f"<div style='font-size: 14px; color: #ccc;'><b>Aguardando Material (Total): {metrics['am_total']}</b><br>Infra: {metrics['am_infra']} | Sistemas: {metrics['am_sist']}</div>", unsafe_allow_html=True)
-    with c3:
-        st.markdown(f"<div style='font-size: 14px; color: #ccc;'><b>Aguardando Liberação Setor (Total): {metrics['al_total']}</b><br>Infra: {metrics['al_infra']} | Sistemas: {metrics['al_sist']}</div>", unsafe_allow_html=True)
+    c1.metric("Aguard. Liberação Setor (Total)", metrics.get('q1_ag_lib', {}).get('total', 0))
+    c2.metric("Infraestrutura (Ag. Lib.)", metrics.get('q1_ag_lib', {}).get('infra', 0))
+    c3.metric("Sistemas (Ag. Lib.)", metrics.get('q1_ag_lib', {}).get('sist', 0))
+    
+    st.markdown("---")
+    # QUADRO 2
+    st.subheader("Chamados com SLA Vencido (Fila Ativa)")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Em Atendimento (Total)", metrics.get('q2_sla_em_atend', {}).get('total', 0))
+    c2.metric("Infraestrutura (SLA)", metrics.get('q2_sla_em_atend', {}).get('infra', 0))
+    c3.metric("Sistemas (SLA)", metrics.get('q2_sla_em_atend', {}).get('sist', 0))
+    
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Aguard. Atendimento (Total)", metrics.get('q2_sla_ag_atend', {}).get('total', 0))
+    c2.metric("Infraestrutura (SLA)", metrics.get('q2_sla_ag_atend', {}).get('infra', 0))
+    c3.metric("Sistemas (SLA)", metrics.get('q2_sla_ag_atend', {}).get('sist', 0))
 
-    c4, c5 = st.columns(2)
-    with c4:
-        st.markdown(f"<div style='text-align: left; font-size: 15px; color: #ccc; margin-top: 10px;'><b>Total SLA Vencido (Abertas): {metrics['total_sla_vencido']} | Total SLA Vencido (Ag. Atendimento): {metrics['total_sla_vencido_aguardando']}</b></div>", unsafe_allow_html=True)
-    with c5:
-        st.markdown(f"<div style='text-align: right; font-size: 15px; color: #ccc; margin-top: 10px;'><b>Total Geral Outros Status: {metrics['total_outros']}</b></div>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Aguard. Liberação Setor (Total)", metrics.get('q2_sla_ag_lib', {}).get('total', 0))
+    c2.metric("Infraestrutura (SLA)", metrics.get('q2_sla_ag_lib', {}).get('infra', 0))
+    c3.metric("Sistemas (SLA)", metrics.get('q2_sla_ag_lib', {}).get('sist', 0))
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    c1.metric("SLA > 3 Dias (Total)", metrics.get('q2_sla_3_dias', {}).get('total', 0))
+    c2.metric("Infraestrutura (SLA > 3d)", metrics.get('q2_sla_3_dias', {}).get('infra', 0))
+    c3.metric("Sistemas (SLA > 3d)", metrics.get('q2_sla_3_dias', {}).get('sist', 0))
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    c1, c2 = st.columns(2)
+    c1.metric("Ontem p/ Hoje (Ag. Atend.)", metrics.get('chamados_ontem_hoje', 0))
+    with c2:
+        apoio_dev_manual = st.number_input("Apoio Desenvolvimento", value=0, min_value=0, step=1)
+        metrics['apoio_dev_manual'] = apoio_dev_manual
+        
+    st.markdown("---")
+    # QUADRO 3
+    st.subheader("Retidos (Conserto Externo e Material)")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Conserto Externo (Total)", metrics.get('q3_ce', {}).get('total', 0))
+    c2.metric("Infraestrutura (CE)", metrics.get('q3_ce', {}).get('infra', 0))
+    c3.metric("Sistemas (CE)", metrics.get('q3_ce', {}).get('sist', 0))
+    
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Aguard. Material (Total)", metrics.get('q3_am', {}).get('total', 0))
+    c2.metric("Infraestrutura (AM)", metrics.get('q3_am', {}).get('infra', 0))
+    c3.metric("Sistemas (AM)", metrics.get('q3_am', {}).get('sist', 0))
 
     # BLOCO 3: FORMULÁRIO DE CONDUÇÃO
     st.header("3. Anotações do Huddle")
@@ -155,11 +182,10 @@ if menu == "🏠 Huddle Diário":
     with c1:
         assuntos = st.text_area("Assuntos Discutidos no Dia (Ações/Ferramentas)")
         atividades = st.text_area("Atividades Planejadas")
-        criticos = st.text_area("Pontos de Atenção – Problemas Críticos")
+        adicionais = st.text_area("Informações Adicionais (Ex: Acompanhar chamados, responsável...)")
     with c2:
         problemas_infra_sist = st.text_area("Temos problemas críticos (Infra ou Sistemas)? (Ex: Lentidão, Impressora pendente)")
         acionamentos = st.text_area("Temos Acionamentos Críticos no Plantão?")
-        adicionais = st.text_area("Informações Adicionais (Ex: Acompanhar chamados, responsável...)")
 
     # BLOCO 4: ATIVIDADES EM ANDAMENTO
     st.header("4. Atividades em Andamento (Por Analista)")
@@ -199,6 +225,10 @@ if menu == "🏠 Huddle Diário":
             )
             analistas_data[analista] = texto
 
+    st.markdown("<br>", unsafe_allow_html=True)
+    reincidentes = st.text_area("Chamados Reincidentes", placeholder="Ex: Impressora Farmacia OS 12345, OS 67890", height=100)
+
+
     # BLOCO 5: EXPORTAÇÃO E HISTÓRICO
     st.markdown("---")
     
@@ -217,10 +247,10 @@ if menu == "🏠 Huddle Diário":
             form_data = {
                 'assuntos_discutidos': assuntos,
                 'atividades_planejadas': atividades,
-                'problemas_criticos': criticos,
                 'problemas_infra_sistemas': problemas_infra_sist,
                 'acionamentos_plantao': acionamentos,
-                'informacoes_adicionais': adicionais
+                'informacoes_adicionais': adicionais,
+                'reincidentes': reincidentes
             }
             
             data_atual = datetime.now().strftime("%d_%m_%Y")

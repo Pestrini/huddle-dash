@@ -76,68 +76,78 @@ def generate_pdf(metrics, form_data, analistas_data, output_path):
         else:
             pdf.cell(0, 5, 'Nenhum registro.', ln=True)
         pdf.ln(5)
-        
-    print_section('ASSUNTOS DISCUTIDOS NO DIA:', form_data.get('assuntos_discutidos', ''))
-    print_section('ATIVIDADES PLANEJADAS:', form_data.get('atividades_planejadas', ''))
-    print_section('PONTOS DE ATENÇÃO - PROBLEMAS CRÍTICOS:', form_data.get('problemas_criticos', ''))
-    print_section('INFORMAÇÕES ADICIONAIS:', form_data.get('informacoes_adicionais', ''))
-    
-    pdf.add_page()
-    
-    # Posicionamento Huddle Table
+
+    # ---------------- QUADROS DE MÉTRICAS ----------------
     pdf.set_font("Arial", 'B', 14)
     pdf.cell(0, 10, 'POSICIONAMENTO HUDDLE', ln=True, align='C')
+    pdf.ln(2)
+    
+    col_status_w = 95
+    col_num_w = 30
+    
+    def print_quadro_header(title):
+        pdf.set_font("Arial", 'B', 10)
+        pdf.set_fill_color(220, 220, 220)
+        pdf.cell(col_status_w + (col_num_w * 3), 8, title, border=1, ln=True, align='C', fill=True)
+        pdf.set_font("Arial", 'B', 8)
+        pdf.cell(col_status_w, 6, 'STATUS', border=1, align='C', fill=True)
+        pdf.cell(col_num_w, 6, 'TOTAL', border=1, align='C', fill=True)
+        pdf.cell(col_num_w, 6, 'INFRA', border=1, align='C', fill=True)
+        pdf.cell(col_num_w, 6, 'SISTEMAS', border=1, align='C', fill=True)
+        pdf.ln(6)
+        
+    def print_quadro_row(status, total, infra, sist, is_bold=False):
+        pdf.set_font("Arial", 'B' if is_bold else '', 8)
+        pdf.cell(col_status_w, 6, str(status), border=1)
+        pdf.set_font("Arial", '', 9)
+        pdf.cell(col_num_w, 6, str(total), border=1, align='C')
+        pdf.cell(col_num_w, 6, str(infra), border=1, align='C')
+        pdf.cell(col_num_w, 6, str(sist), border=1, align='C')
+        pdf.ln(6)
+        
+    def g(q, key):
+        return metrics.get(q, {}).get(key, 0)
+        
+    # QUADRO 1
+    print_quadro_header('QUADRO 1: VISÃO GERAL DE CHAMADOS')
+    print_quadro_row('Total Chamados (todos os status)', g('q1_geral', 'total'), g('q1_geral', 'infra'), g('q1_geral', 'sist'), True)
+    print_quadro_row('FILA ATIVA (Sem Conserto Externo e Aguardando Material)', g('q1_ativa', 'total'), g('q1_ativa', 'infra'), g('q1_ativa', 'sist'), True)
+    print_quadro_row('   -> Em Atendimento', g('q1_em_atend', 'total'), g('q1_em_atend', 'infra'), g('q1_em_atend', 'sist'))
+    print_quadro_row('   -> Aguardando Atendimento', g('q1_ag_atend', 'total'), g('q1_ag_atend', 'infra'), g('q1_ag_atend', 'sist'))
+    print_quadro_row('   -> Aguardando Liberação Setor', g('q1_ag_lib', 'total'), g('q1_ag_lib', 'infra'), g('q1_ag_lib', 'sist'))
+    pdf.ln(3)
+    
+    # QUADRO 2
+    print_quadro_header('QUADRO 2: CHAMADOS COM SLA VENCIDO')
+    print_quadro_row('SLA VENCIDO (FILA ATIVA)', g('q2_sla_ativo', 'total'), g('q2_sla_ativo', 'infra'), g('q2_sla_ativo', 'sist'), True)
+    print_quadro_row('   -> Em Atendimento', g('q2_sla_em_atend', 'total'), g('q2_sla_em_atend', 'infra'), g('q2_sla_em_atend', 'sist'))
+    print_quadro_row('   -> Aguardando Atendimento', g('q2_sla_ag_atend', 'total'), g('q2_sla_ag_atend', 'infra'), g('q2_sla_ag_atend', 'sist'))
+    print_quadro_row('   -> Aguardando Liberação Setor', g('q2_sla_ag_lib', 'total'), g('q2_sla_ag_lib', 'infra'), g('q2_sla_ag_lib', 'sist'))
+    print_quadro_row('Chamados de ontem para Hoje (Aguard. Atendimento)', metrics.get('chamados_ontem_hoje', 0), '-', '-')
+    print_quadro_row('SLA Vencido > 3 dias', g('q2_sla_3_dias', 'total'), g('q2_sla_3_dias', 'infra'), g('q2_sla_3_dias', 'sist'))
+    pdf.ln(3)
+
+    # QUADRO 3
+    print_quadro_header('QUADRO 3: RETIDOS (CONSERTO E MATERIAL)')
+    print_quadro_row('TOTAL RETIDOS', g('q3_retidos', 'total'), g('q3_retidos', 'infra'), g('q3_retidos', 'sist'), True)
+    print_quadro_row('   -> Conserto Externo', g('q3_ce', 'total'), g('q3_ce', 'infra'), g('q3_ce', 'sist'))
+    print_quadro_row('   -> Aguardando Material', g('q3_am', 'total'), g('q3_am', 'infra'), g('q3_am', 'sist'))
     pdf.ln(5)
     
-    pdf.set_font("Arial", 'B', 8)
-    # Aumentando a largura da primeira coluna para caber o texto gigante sem transbordar
-    col1_w, col2_w = 150, 40
+    # ---------------- TEXTOS LIVRES ----------------
+    pdf.add_page()
+    print_section('ASSUNTOS DISCUTIDOS NO DIA:', form_data.get('assuntos_discutidos', ''))
+    print_section('TEMOS PROBLEMAS CRÍTICOS (INFRA OU SISTEMAS)?', form_data.get('problemas_infra_sistemas', 'Sem ocorrências'))
+    print_section('TEMOS ACIONAMENTOS CRÍTICOS NO PLANTÃO?', form_data.get('acionamentos_plantao', 'Sem ocorrências'))
+    print_section('ATIVIDADES PLANEJADAS:', form_data.get('atividades_planejadas', ''))
+    print_section('INFORMAÇÕES ADICIONAIS:', form_data.get('informacoes_adicionais', ''))
     
-    def print_metric_row(label, value):
-        pdf.set_font("Arial", 'B', 8)
-        pdf.cell(col1_w, 8, label, border=1)
-        pdf.set_font("Arial", '', 9)
-        pdf.cell(col2_w, 8, str(value), border=1, align='C')
-        pdf.ln(8)
-        
-    print_metric_row('CHAMADOS ABERTOS GERAL', metrics.get('chamados_abertos_geral', 0))
-    print_metric_row('CHAMADOS DE SISTEMAS', metrics.get('chamados_sistemas', 0))
-    print_metric_row('CHAMADOS DE INFRAESTRUTURA', metrics.get('chamados_infra', 0))
-    print_metric_row('CHAMADOS QUE PRECISAM APOIO DESENVOLVIMENTO', metrics.get('apoio_dev_manual', 0))
-    print_metric_row('TOTAL CHAMADOS SLA VENCIDO DESCONSIDERANDO CONSERTO EXTERNO', metrics.get('sla_vencido_sem_ce', 0))
-    print_metric_row('CHAMADOS INFRA SLA VENCIDO (ABERTAS)', metrics.get('infra_sla_vencido', 0))
-    print_metric_row('CHAMADOS SISTEMAS SLA VENCIDO (ABERTAS)', metrics.get('sistemas_sla_vencido', 0))
-    print_metric_row('CHAMADOS INFRA SLA VENCIDO (AGUARDANDO ATENDIMENTO)', metrics.get('infra_sla_vencido_aguardando', 0))
-    print_metric_row('CHAMADOS SISTEMAS SLA VENCIDO (AGUARDANDO ATENDIMENTO)', metrics.get('sistemas_sla_vencido_aguardando', 0))
-    print_metric_row('CHAMADOS SLA VENCIDO A MAIS DE 03 DIAS', metrics.get('sla_vencido_3_dias', 0))
-    print_metric_row('CHAMADOS DO FINAL DO DIA PARA OUTRO - ONTEM PARA HOJE', metrics.get('chamados_ontem_hoje', 0))
-    
-    # Extra Questions inside table
-    pdf.set_font("Arial", 'B', 9)
-    x1, y1 = pdf.get_x(), pdf.get_y()
-    pdf.cell(col1_w, 16, 'TEMOS PROBLEMAS CRÍTICOS (INFRA OU SISTEMAS)?', border=1)
-    
-    # Desenhando a celula vazia inteira para garantir a borda total do mesmo tamanho
-    x2, y2 = pdf.get_x(), pdf.get_y()
-    pdf.cell(col2_w, 16, '', border=1)
-    
-    # Posicionando o texto sem borda no meio do retangulo
-    pdf.set_xy(x2, y2 + 4)
-    pdf.set_font("Arial", '', 9)
-    pdf.multi_cell(col2_w, 8, form_data.get('problemas_infra_sistemas', '') or 'Sem ocorrências', border=0, align='C')
-    pdf.set_xy(10, y1 + 16)
-    
-    pdf.set_font("Arial", 'B', 9)
-    x1, y1 = pdf.get_x(), pdf.get_y()
-    pdf.cell(col1_w, 16, 'TEMOS ACIONAMENTOS CRÍTICOS NO PLANTÃO?', border=1)
-    
-    x2, y2 = pdf.get_x(), pdf.get_y()
-    pdf.cell(col2_w, 16, '', border=1)
-    
-    pdf.set_xy(x2, y2 + 4)
-    pdf.set_font("Arial", '', 9)
-    pdf.multi_cell(col2_w, 8, form_data.get('acionamentos_plantao', '') or 'Sem ocorrências', border=0, align='C')
-    pdf.set_xy(10, y1 + 16)
+    # Se precisar de Apoio Dev, colocar nas info adicionais pra não perder
+    apoio_dev = metrics.get('sugestao_apoio_dev', 0)
+    if apoio_dev > 0:
+        print_section('APOIO DESENVOLVIMENTO:', f"Sugerido avaliar {apoio_dev} chamados da equipe de Sistemas.")
+
+    pdf.add_page()
     
     pdf.ln(10)
     
@@ -149,12 +159,44 @@ def generate_pdf(metrics, form_data, analistas_data, output_path):
     for analista, texto in analistas_data.items():
         if texto and texto.strip():
             texto = texto.replace('\u2013', '-').replace('\u2014', '-')
-            texto = texto.encode('latin-1', 'replace').decode('latin-1')
+            
             pdf.set_font("Arial", 'B', 10)
             pdf.cell(0, 6, f'ANALISTA {analista.upper()}', ln=True)
             pdf.set_font("Arial", '', 10)
-            pdf.multi_cell(0, 5, texto)
-            pdf.ln(5)
             
+            if '🔴' in texto:
+                import re
+                # Prepara o HTML e faz o parse da bolinha vermelha para a tag HTML da fonte
+                html_texto = texto.replace('\n', '<br>')
+                # Remove o icone 🔴 e coloca o que vier depois (a OS) em vermelho
+                # Match números e possíveis letras da OS
+                html_texto = re.sub(r'🔴\s*([A-Za-z0-9_-]+)', r'<font color="#ff0000">\1</font>', html_texto)
+                
+                # Falha segura: remove qualquer bolinha residual que a regex não tenha pego, 
+                # pois emojis quebram o parser do FPDF (helvetica/latin-1)
+                html_texto = html_texto.replace('🔴', '')
+                
+                # FPDF write_html pode quebrar com encodes não suportados
+                html_texto = html_texto.encode('latin-1', 'replace').decode('latin-1')
+                
+                pdf.write_html(html_texto)
+                pdf.ln(5)
+            else:
+                texto = texto.encode('latin-1', 'replace').decode('latin-1')
+                pdf.multi_cell(0, 5, texto)
+                pdf.ln(5)
+            
+    # Chamados Reincidentes
+    reincidentes = form_data.get('reincidentes', '')
+    if reincidentes and reincidentes.strip():
+        reincidentes = reincidentes.replace('\u2013', '-').replace('\u2014', '-')
+        reincidentes = reincidentes.encode('latin-1', 'replace').decode('latin-1')
+        pdf.set_font("Arial", 'B', 10)
+        pdf.set_text_color(200, 0, 0) # Red color for the title to stand out
+        pdf.cell(0, 6, 'CHAMADOS REINCIDENTES', ln=True)
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font("Arial", '', 10)
+        pdf.multi_cell(0, 5, reincidentes)
+        pdf.ln(5)
     pdf.output(output_path)
     return output_path

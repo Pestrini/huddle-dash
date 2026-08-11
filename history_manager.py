@@ -47,16 +47,16 @@ def save_daily_metrics(metrics):
     
     nova_linha = {
         'Data': hoje_str,
-        'Abertos Geral': metrics.get('chamados_abertos_geral', 0),
-        'Sistemas': metrics.get('chamados_sistemas', 0),
-        'Infraestrutura': metrics.get('chamados_infra', 0),
-        'SLA Vencido Total': metrics.get('total_sla_vencido', 0),
-        'SLA Vencido Sistemas': metrics.get('sistemas_sla_vencido', 0),
-        'SLA Vencido Infra': metrics.get('infra_sla_vencido', 0),
-        'Aguardando Material': metrics.get('am_total', 0),
-        'Conserto Externo': metrics.get('ce_total', 0),
-        'Aguardando Liberação Setor': metrics.get('al_total', 0),
-        'Aguardando Atendimento': metrics.get('aat_total', 0)
+        'Abertos Geral': metrics.get('q1_geral', {}).get('total', 0),
+        'Sistemas': metrics.get('q1_geral', {}).get('sist', 0),
+        'Infraestrutura': metrics.get('q1_geral', {}).get('infra', 0),
+        'SLA Vencido Total': metrics.get('q2_sla_em_atend', {}).get('total', 0),
+        'SLA Vencido Sistemas': metrics.get('q2_sla_em_atend', {}).get('sist', 0),
+        'SLA Vencido Infra': metrics.get('q2_sla_em_atend', {}).get('infra', 0),
+        'Aguardando Material': metrics.get('q3_am', {}).get('total', 0),
+        'Conserto Externo': metrics.get('q3_ce', {}).get('total', 0),
+        'Aguardando Liberação Setor': metrics.get('q1_ag_lib', {}).get('total', 0),
+        'Aguardando Atendimento': metrics.get('q1_ag_atend', {}).get('total', 0)
     }
     
     if history_exists_for_today():

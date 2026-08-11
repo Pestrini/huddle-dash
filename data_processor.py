@@ -67,6 +67,11 @@ def process_dataframe(df, config):
     col_sla = find_column(df, 'SLA Vencido')
     col_data = find_column(df, 'Data Solicita')
     col_os = find_column(df, 'Os')
+    
+    # Remover "Não Classificada" / Sem Responsável de TODOS os cálculos
+    if col_status:
+        status_temp = df[col_status].astype(str).str.strip().str.upper()
+        df = df[~status_temp.isin(['NÃO CLASSIFICADA', 'NAO CLASSIFICADA', 'SEM RESPONSÁVEL', 'SEM RESPONSAVEL'])]
 
     df['Equipe'] = df.apply(lambda r: get_equipe(r, config, col_resp, col_tipo), axis=1)
     
@@ -103,76 +108,67 @@ def process_dataframe(df, config):
             return d == ontem
         return False
 
-    # Lógicas e Condições Base
-    abertos_geral = len(df)
-    sistemas = len(df[df['Equipe'] == 'Sistemas'])
-    infra = len(df[df['Equipe'] == 'Infraestrutura'])
-    
-    apoio_dev = 0
-    if col_status:
-        apoio_dev = len(df[(df['Equipe'] == 'Sistemas') & (df[col_status].astype(str).str.strip().str.upper().str.contains('AGENDAR', na=False))])
-        
-    status_upper = df[col_status].astype(str).str.strip().str.upper() if col_status else pd.Series(['']*len(df))
-    
-    sla_vencido_cond = pd.Series([False]*len(df))
+    # Status upper reconstruído
+    status_upper = df[col_status].astype(str).str.strip().str.upper() if col_status else pd.Series(['']*len(df), index=df.index)
+
+    sla_vencido_cond = pd.Series([False]*len(df), index=df.index)
     if col_sla:
         sla_vencido_cond = df[col_sla].astype(str).str.strip().str.upper() == 'SIM'
-        
-    # Regra 2: Desconsiderar Conserto Externo e Aguardando Material
-    nao_conserto_aguardando = ~status_upper.isin(['CONSERTO EXTERNO', 'AGUARDANDO MATERIAL'])
-    
-    # Regra 3: Apenas Aberta ou Aguardando Atendimento
-    apenas_aberta = status_upper == 'ABERTA'
-    apenas_aguardando = status_upper == 'AGUARDANDO ATENDIMENTO'
-    aberta_ou_aguardando = apenas_aberta | apenas_aguardando
-    
-    # Aplicando as regras aos indicadores
-    
-    # Novo indicador que desconsidera APENAS Conserto Externo
-    nao_conserto = ~status_upper.isin(['CONSERTO EXTERNO'])
-    sla_vencido_sem_ce = len(df[sla_vencido_cond & nao_conserto])
-    
-    # Total SLA Vencido (Abertas)
-    total_sla_vencido = len(df[sla_vencido_cond & apenas_aberta])
-    
-    # Total SLA Vencido (Aguardando Atendimento)
-    total_sla_vencido_aguardando = len(df[sla_vencido_cond & apenas_aguardando])
-    
-    # Infra e Sistemas SLA Vencido (Abertas)
-    infra_sla_vencido = len(df[(df['Equipe'] == 'Infraestrutura') & sla_vencido_cond & apenas_aberta])
-    sistemas_sla_vencido = len(df[(df['Equipe'] == 'Sistemas') & sla_vencido_cond & apenas_aberta])
-    
-    # Infra e Sistemas SLA Vencido (Aguardando Atendimento)
-    infra_sla_vencido_aguardando = len(df[(df['Equipe'] == 'Infraestrutura') & sla_vencido_cond & apenas_aguardando])
-    sistemas_sla_vencido_aguardando = len(df[(df['Equipe'] == 'Sistemas') & sla_vencido_cond & apenas_aguardando])
-    
-    # SLA Vencido > 3 Dias (Regra 4)
-    older_3_days_cond = df[col_data].apply(is_older_than_3_days) if col_data else pd.Series([False]*len(df))
-    sla_vencido_3_dias = len(df[sla_vencido_cond & older_3_days_cond])
-    
-    # Chamados Ontem p/ Hoje (Regra 5)
-    ontem_hoje_cond = df[col_data].apply(is_yesterday) if col_data else pd.Series([False]*len(df))
-    chamados_ontem_hoje = len(df[ontem_hoje_cond & aberta_ou_aguardando])
 
-    # Novos Indicadores Discretos (Conserto, Material, Liberação)
-    conserto_ext = status_upper == 'CONSERTO EXTERNO'
-    ce_total = len(df[conserto_ext])
-    ce_infra = len(df[(df['Equipe'] == 'Infraestrutura') & conserto_ext])
-    ce_sist = len(df[(df['Equipe'] == 'Sistemas') & conserto_ext])
+    # Filtros base
+    apenas_aberta = status_upper == 'ABERTA' # Equivale a "Em Atendimento"
+    apenas_aguardando = status_upper == 'AGUARDANDO ATENDIMENTO'
+    apenas_liberacao = status_upper.str.contains('AGUARDANDO LIBERA', na=False)
+    apenas_ce = status_upper == 'CONSERTO EXTERNO'
+    apenas_am = status_upper == 'AGUARDANDO MATERIAL'
     
-    ag_mat = status_upper == 'AGUARDANDO MATERIAL'
-    am_total = len(df[ag_mat])
-    am_infra = len(df[(df['Equipe'] == 'Infraestrutura') & ag_mat])
-    am_sist = len(df[(df['Equipe'] == 'Sistemas') & ag_mat])
+    # Condições Quadros
+    is_infra = df['Equipe'] == 'Infraestrutura'
+    is_sist = df['Equipe'] == 'Sistemas'
     
-    ag_lib = status_upper.str.contains('AGUARDANDO LIBERA', na=False)
-    al_total = len(df[ag_lib])
-    al_infra = len(df[(df['Equipe'] == 'Infraestrutura') & ag_lib])
-    al_sist = len(df[(df['Equipe'] == 'Sistemas') & ag_lib])
+    # Função auxiliar de contagem
+    def count(cond):
+        return {
+            'total': len(df[cond]),
+            'infra': len(df[cond & is_infra]),
+            'sist': len(df[cond & is_sist])
+        }
+
+    # QUADRO 1: Visão Geral de Chamados
+    q1_geral = count(pd.Series([True]*len(df), index=df.index))
     
-    aat_total = len(df[apenas_aguardando])
+    cond_fila_ativa = ~(apenas_ce | apenas_am)
+    q1_ativa = count(cond_fila_ativa)
     
-    total_outros = ce_total + am_total + al_total
+    q1_em_atend = count(apenas_aberta)
+    q1_ag_atend = count(apenas_aguardando)
+    q1_ag_lib = count(apenas_liberacao)
+    
+    # QUADRO 2: SLA Vencido
+    cond_sla_ativo = sla_vencido_cond & cond_fila_ativa
+    q2_sla_ativo = count(cond_sla_ativo)
+    
+    q2_sla_em_atend = count(sla_vencido_cond & apenas_aberta)
+    q2_sla_ag_atend = count(sla_vencido_cond & apenas_aguardando)
+    q2_sla_ag_lib = count(sla_vencido_cond & apenas_liberacao)
+    
+    older_3_days_cond = df[col_data].apply(is_older_than_3_days) if col_data else pd.Series([False]*len(df), index=df.index)
+    q2_sla_3_dias = count(cond_sla_ativo & older_3_days_cond)
+    
+    ontem_hoje_cond = df[col_data].apply(is_yesterday) if col_data else pd.Series([False]*len(df), index=df.index)
+    # Ontem p/ hoje considera apenas Aguardando Atendimento (conforme alinhamento do usuário)
+    chamados_ontem_hoje = len(df[ontem_hoje_cond & apenas_aguardando])
+    
+    # QUADRO 3: Conserto Externo e Material
+    cond_ce_am = apenas_ce | apenas_am
+    q3_retidos = count(cond_ce_am)
+    q3_ce = count(apenas_ce)
+    q3_am = count(apenas_am)
+    
+    # Legados necessários
+    apoio_dev = 0
+    if col_status:
+        apoio_dev = len(df[is_sist & status_upper.str.contains('AGENDAR', na=False)])
 
     # Ordenar Dataframe para extração de OS
     col_prio = find_column(df, 'Prioridade')
@@ -205,14 +201,26 @@ def process_dataframe(df, config):
             df_analista = df[df[col_resp].astype(str).str.strip().str.upper().str.contains(analista_nome, na=False)]
             
             if not df_analista.empty:
-                # Helper to format list
                 def get_os_string(condition):
-                    filtered = df_analista[condition]
+                    filtered = df_analista[condition].copy()
                     if filtered.empty: return ""
-                    return ", ".join(filtered[col_os].astype(str).str.replace(r'\.0$', '', regex=True).str.strip().tolist())
+                    
+                    if col_sla:
+                        filtered['SLA_VENCIDO_FLAG'] = filtered[col_sla].astype(str).str.strip().str.upper() == 'SIM'
+                    else:
+                        filtered['SLA_VENCIDO_FLAG'] = False
+                        
+                    res = []
+                    for idx, row in filtered.iterrows():
+                        os_val = str(row[col_os]).replace('.0', '').strip()
+                        if row['SLA_VENCIDO_FLAG']:
+                            res.append(f"🔴 {os_val}")
+                        else:
+                            res.append(os_val)
+                    return ", ".join(res)
                 
-                # Aberta / Solicitação
-                cond_aberta = df_analista[col_status].astype(str).str.strip().str.upper().isin(['ABERTA', 'SOLICITAÇÃO', 'SOLICITACAO']) if col_status else pd.Series([True]*len(df_analista), index=df_analista.index)
+                # Aberta / Aguardando Atendimento
+                cond_aberta = df_analista[col_status].astype(str).str.strip().str.upper().isin(['ABERTA', 'AGUARDANDO ATENDIMENTO']) if col_status else pd.Series([True]*len(df_analista), index=df_analista.index)
                 os_aberta_solic[analista] = get_os_string(cond_aberta)
                 
                 # Conserto Externo
@@ -233,24 +241,24 @@ def process_dataframe(df, config):
                 os_liberacao[analista] = ""
 
     return {
-        'chamados_abertos_geral': abertos_geral,
-        'chamados_sistemas': sistemas,
-        'chamados_infra': infra,
-        'sla_vencido_sem_ce': sla_vencido_sem_ce,
-        'sugestao_apoio_dev': apoio_dev,
-        'total_sla_vencido': total_sla_vencido,
-        'infra_sla_vencido': infra_sla_vencido,
-        'sistemas_sla_vencido': sistemas_sla_vencido,
-        'total_sla_vencido_aguardando': total_sla_vencido_aguardando,
-        'infra_sla_vencido_aguardando': infra_sla_vencido_aguardando,
-        'sistemas_sla_vencido_aguardando': sistemas_sla_vencido_aguardando,
-        'sla_vencido_3_dias': sla_vencido_3_dias,
+        'q1_geral': q1_geral,
+        'q1_ativa': q1_ativa,
+        'q1_em_atend': q1_em_atend,
+        'q1_ag_atend': q1_ag_atend,
+        'q1_ag_lib': q1_ag_lib,
+        
+        'q2_sla_ativo': q2_sla_ativo,
+        'q2_sla_em_atend': q2_sla_em_atend,
+        'q2_sla_ag_atend': q2_sla_ag_atend,
+        'q2_sla_ag_lib': q2_sla_ag_lib,
+        'q2_sla_3_dias': q2_sla_3_dias,
         'chamados_ontem_hoje': chamados_ontem_hoje,
-        'ce_total': ce_total, 'ce_infra': ce_infra, 'ce_sist': ce_sist,
-        'am_total': am_total, 'am_infra': am_infra, 'am_sist': am_sist,
-        'al_total': al_total, 'al_infra': al_infra, 'al_sist': al_sist,
-        'aat_total': aat_total,
-        'total_outros': total_outros,
+        
+        'q3_retidos': q3_retidos,
+        'q3_ce': q3_ce,
+        'q3_am': q3_am,
+        
+        'sugestao_apoio_dev': apoio_dev,
         'os_aberta_solic': os_aberta_solic,
         'os_conserto': os_conserto,
         'os_material': os_material,
